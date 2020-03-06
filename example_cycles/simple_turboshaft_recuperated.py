@@ -25,6 +25,7 @@ class Turboshaft(om.Group):
         self.add_subsystem('comp', pyc.Compressor(map_data=pyc.AXI5, design=design,
                                     thermo_data=thermo_spec, elements=pyc.AIR_MIX, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'HP_Nmech')])
+        self.add_subsystem('duct6', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_MIX))
         self.add_subsystem('burner', pyc.Combustor(design=design,thermo_data=thermo_spec,
                                     inflow_elements=pyc.AIR_MIX,
                                     air_fuel_elements=pyc.AIR_FUEL_MIX,
@@ -35,6 +36,8 @@ class Turboshaft(om.Group):
         self.add_subsystem('pt', pyc.Turbine(map_data=pyc.LPT2269, design=design,
                                     thermo_data=thermo_spec, elements=pyc.AIR_FUEL_MIX, map_extrap=True),
                                     promotes_inputs=[('Nmech', 'LP_Nmech')])
+        self.add_subsystem('duct12', pyc.Duct(design=design, thermo_data=thermo_spec, elements=pyc.AIR_FUEL_MIX))
+        self.add_subsystem('hx', pyc.HeatExchanger())
         self.add_subsystem('nozz', pyc.Nozzle(nozzType='CV', lossCoef='Cv',
                                     thermo_data=thermo_spec, elements=pyc.AIR_FUEL_MIX))
         self.add_subsystem('HP_shaft', pyc.Shaft(num_ports=2),promotes_inputs=[('Nmech', 'HP_Nmech')])
@@ -44,10 +47,12 @@ class Turboshaft(om.Group):
         # Connect flow stations
         pyc.connect_flow(self, 'fc.Fl_O', 'inlet.Fl_I', connect_w=False)
         pyc.connect_flow(self, 'inlet.Fl_O', 'comp.Fl_I')
-        pyc.connect_flow(self, 'comp.Fl_O', 'burner.Fl_I')
+        pyc.connect_flow(self, 'comp.Fl_O', 'duct6.Fl_I')
+        pyc.connect_flow(self, 'duct6.Fl_O', 'burner.Fl_I')
         pyc.connect_flow(self, 'burner.Fl_O', 'turb.Fl_I')
         pyc.connect_flow(self, 'turb.Fl_O', 'pt.Fl_I')
-        pyc.connect_flow(self, 'pt.Fl_O', 'nozz.Fl_I')
+        pyc.connect_flow(self, 'pt.Fl_O', 'duct12.Fl_I')
+        pyc.connect_flow(self, 'duct12.Fl_O','nozz.Fl_I')
 
         # Connect turbomachinery elements to shaft
         self.connect('comp.trq', 'HP_shaft.trq_0')
@@ -56,6 +61,16 @@ class Turboshaft(om.Group):
 
         # Connnect nozzle exhaust to freestream static conditions
         self.connect('fc.Fl_O:stat:P', 'nozz.Ps_exhaust')
+
+        # Connect heat exchanger to ducts
+        self.connect('comp.Fl_O:tot:T', 'hx.Tt1')
+        self.connect('pt.Fl_O:tot:T', 'hx.Tt2')
+        self.connect('comp.Fl_O:tot:Cp', 'hx.Cp1')
+        self.connect('pt.Fl_O:tot:Cp', 'hx.Cp2')
+        self.connect('comp.Fl_O:stat:W', 'hx.W1')
+        self.connect('pt.Fl_O:stat:W', 'hx.W2')
+        self.connect('hx.Q1', 'duct6.Q_dot')
+        self.connect('hx.Q2', 'duct12.Q_dot')
 
         # Connect outputs to pefromance element
         self.connect('inlet.Fl_O:tot:P', 'perf.Pt2')
@@ -100,13 +115,13 @@ class Turboshaft(om.Group):
             self.connect('nozz.Throat:stat:area', 'balance.lhs:W')
 
         # Setup solver to converge engine
-        self.set_order(['balance', 'fc', 'inlet', 'comp', 'burner', 'turb', 'pt', 'nozz', 'HP_shaft', 'LP_shaft', 'perf'])
+        self.set_order(['balance', 'fc', 'inlet', 'comp', 'duct6', 'burner', 'turb', 'pt', 'duct12', 'nozz','hx', 'HP_shaft', 'LP_shaft', 'perf'])
 
         newton = self.nonlinear_solver = om.NewtonSolver()
         newton.options['atol'] = 1e-6
         newton.options['rtol'] = 1e-6
         newton.options['iprint'] = 2
-        newton.options['maxiter'] = 15
+        newton.options['maxiter'] = 30
         newton.options['solve_subsystems'] = True
         newton.options['max_sub_solves'] = 100
         # newton.linesearch = om.BoundsEnforceLS()
@@ -135,8 +150,8 @@ def viewer(prob, pt, file=sys.stdout):
                 prob[pt+'.perf.Fn'],prob[pt+'.perf.Fg'],prob[pt+'.inlet.F_ram'],prob[pt+'.perf.OPR'],prob[pt+'.perf.PSFC']))    
 
 
-    fs_names = ['fc.Fl_O','inlet.Fl_O','comp.Fl_O',
-                'burner.Fl_O','turb.Fl_O','pt.Fl_O',
+    fs_names = ['fc.Fl_O','inlet.Fl_O','comp.Fl_O','duct6.Fl_O',
+                'burner.Fl_O','turb.Fl_O','pt.Fl_O','duct12.Fl_O',
                 'nozz.Fl_O']
     fs_full_names = [f'{pt}.{fs}' for fs in fs_names]
     pyc.print_flow_station(prob, fs_full_names, file=file)
@@ -150,6 +165,10 @@ def viewer(prob, pt, file=sys.stdout):
     turb_names = ['turb','pt']
     turb_full_names = [f'{pt}.{t}' for t in turb_names]
     pyc.print_turbine(prob, turb_full_names, file=file)
+
+    duct_names = ['duct6','duct12']
+    duct_full_names = [f'{pt}.{t}' for t in duct_names]
+    pyc.print_duct(prob, duct_full_names, file=file)
 
     noz_names = ['nozz']
     noz_full_names = [f'{pt}.{n}' for n in noz_names]
@@ -177,19 +196,24 @@ if __name__ == "__main__":
     # des_vars.add_output('Fn_des', 11800.0, units='lbf'),
     des_vars.add_output('pwr_des', 4000.0, units='hp')
     des_vars.add_output('nozz_PR', 1.2)
-    des_vars.add_output('comp:PRdes', 13.5),
+    des_vars.add_output('comp:PRdes', 5.0),
     des_vars.add_output('comp:effDes', 0.83),
+    des_vars.add_output('duct6:dPqP', 0.02),
     des_vars.add_output('burn:dPqP', 0.03),
     des_vars.add_output('turb:effDes', 0.86),
     des_vars.add_output('pt:effDes', 0.9),
+    des_vars.add_output('duct12:dPqP', 0.02),
     des_vars.add_output('nozz:Cv', 0.99),
     des_vars.add_output('HP_shaft:Nmech', 8070.0, units='rpm'),
     des_vars.add_output('LP_shaft:Nmech', 5000.0, units='rpm'),
     des_vars.add_output('inlet:MN_out', 0.60),
     des_vars.add_output('comp:MN_out', 0.20),
+    des_vars.add_output('duct6:MN_out', 0.20),
     des_vars.add_output('burner:MN_out', 0.20),
     des_vars.add_output('turb:MN_out', 0.4),
-    des_vars.add_output('pt:MN_out', 0.5),
+    des_vars.add_output('pt:MN_out', 0.5)
+    des_vars.add_output('duct12:MN_out', 0.5),
+    des_vars.add_output('hx:e', 0.2)
 
     # Off-design (point 1) inputs
     des_vars.add_output('OD1_MN', 0.000001),
@@ -210,18 +234,23 @@ if __name__ == "__main__":
 
     prob.model.connect('comp:PRdes', 'DESIGN.comp.PR')
     prob.model.connect('comp:effDes', 'DESIGN.comp.eff')
+    prob.model.connect('duct6:dPqP', 'DESIGN.duct6.dPqP')
     prob.model.connect('burn:dPqP', 'DESIGN.burner.dPqP')
     prob.model.connect('turb:effDes', 'DESIGN.turb.eff')
     prob.model.connect('pt:effDes', 'DESIGN.pt.eff')
+    prob.model.connect('duct12:dPqP', 'DESIGN.duct12.dPqP')
     prob.model.connect('nozz:Cv', 'DESIGN.nozz.Cv')
     prob.model.connect('HP_shaft:Nmech', 'DESIGN.HP_Nmech')
     prob.model.connect('LP_shaft:Nmech', 'DESIGN.LP_Nmech')
+    prob.model.connect('hx:e', 'DESIGN.hx.e')
 
     prob.model.connect('inlet:MN_out', 'DESIGN.inlet.MN')
     prob.model.connect('comp:MN_out', 'DESIGN.comp.MN')
+    prob.model.connect('duct6:MN_out', 'DESIGN.duct6.MN')
     prob.model.connect('burner:MN_out', 'DESIGN.burner.MN')
     prob.model.connect('turb:MN_out', 'DESIGN.turb.MN')
     prob.model.connect('pt:MN_out', 'DESIGN.pt.MN')
+    prob.model.connect('duct12:MN_out', 'DESIGN.duct12.MN')
 
     # Connect off-design and required design inputs to model
     pts = ['OD1']
@@ -229,8 +258,11 @@ if __name__ == "__main__":
     for pt in pts:
         prob.model.add_subsystem(pt, Turboshaft(design=False))
 
+        prob.model.connect('duct6:dPqP', pt+'.duct6.dPqP')
         prob.model.connect('burn:dPqP', pt+'.burner.dPqP')
+        prob.model.connect('duct12:dPqP', pt+'.duct12.dPqP')
         prob.model.connect('nozz:Cv', pt+'.nozz.Cv')
+        prob.model.connect('hx:e', pt+'.hx.e')
 
         prob.model.connect(pt+'_alt', pt+'.fc.alt')
         prob.model.connect(pt+'_MN', pt+'.fc.MN')
@@ -254,9 +286,11 @@ if __name__ == "__main__":
 
         prob.model.connect('DESIGN.inlet.Fl_O:stat:area', pt+'.inlet.area')
         prob.model.connect('DESIGN.comp.Fl_O:stat:area', pt+'.comp.area')
+        prob.model.connect('DESIGN.duct6.Fl_O:stat:area', pt+'.duct6.area')
         prob.model.connect('DESIGN.burner.Fl_O:stat:area', pt+'.burner.area')
         prob.model.connect('DESIGN.turb.Fl_O:stat:area', pt+'.turb.area')
         prob.model.connect('DESIGN.pt.Fl_O:stat:area', pt+'.pt.area')
+        prob.model.connect('DESIGN.duct12.Fl_O:stat:area', pt+'.duct12.area')
 
         # prob.model.connect(pt+'_T4', pt+'.balance.rhs:FAR')
         # prob.model.connect(pt+'_pwr', pt+'.balance.rhs:FAR')
@@ -290,6 +324,9 @@ if __name__ == "__main__":
 
     for pt in ['DESIGN']+pts:
         viewer(prob, pt)
+
+    # print(prob['DESIGN.hx.Q1'],prob['DESIGN.hx.Q2'])
+    # print(prob['DESIGN.duct6.Q_dot'],prob['DESIGN.duct12.Q_dot'])
 
     print()
     print("time", time.time() - st)

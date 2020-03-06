@@ -64,6 +64,29 @@ def print_compressor(prob, element_names, file=sys.stdout):
               file=file, flush=True)
     print("-"*len_header, file=file, flush=True)
 
+def print_duct(prob, element_names, file=sys.stdout):
+
+    len_header = 17+12*2
+    # print("-"*len_header)
+    print("-"*len_header, file=file, flush=True)
+    print("                          DUCT PROPERTIES", file=file, flush=True)
+    print("-"*len_header, file=file, flush=True)
+
+    line_tmpl = '{:<14}|  '+'{:>11}'*2
+    print(line_tmpl.format('Duct', 'dPqP', 'Q_dot'),
+          file=file, flush=True)
+    print("-"*len_header, file=file, flush=True)
+
+
+    line_tmpl = '{:<14}|  '+'{:11.3f}'*2
+    for e_name in element_names:
+        sys = prob.model._get_subsystem(e_name)
+
+        print(line_tmpl.format(e_name, prob[e_name+'.dPqP'][0], prob[e_name+'.Q_dot'][0]), 
+              file=file, flush=True)
+    print("-"*len_header, file=file, flush=True)
+
+
 
 def print_burner(prob, element_names, file=sys.stdout):
     len_header = 23+4*13
@@ -150,7 +173,7 @@ def print_bleed(prob, element_names, file=sys.stdout):
     # get max name length:
     max_name_len = 0 
     for e_name in element_names:
-        print('foo', e_name)
+        # print('foo', e_name)
         bleed = prob.model._get_subsystem(e_name)
         for bn in bleed.options['bleed_names']: 
             max_name_len = max(max_name_len, len(e_name+bn))

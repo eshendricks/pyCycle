@@ -21,7 +21,7 @@ from pycycle.elements.mixer import Mixer
 from pycycle.elements.bleed_out import BleedOut
 from pycycle.elements.cooling import TurbineCooling, CombineCooling
 from pycycle.elements.gearbox import Gearbox
-
+from pycycle.elements.heat_exchanger import HeatExchanger
 
 from pycycle.maps.axi5 import AXI5
 from pycycle.maps.axi3_2 import AXI3_2
@@ -37,4 +37,4 @@ from pycycle.maps.ncp01 import NCP01
 from pycycle.connect_flow import connect_flow
 
 from pycycle.viewers import print_bleed, print_burner, print_compressor, print_flow_station, \
-                            print_mixer, print_nozzle, print_shaft, print_turbine
+                            print_mixer, print_nozzle, print_shaft, print_turbine, print_duct
