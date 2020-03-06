@@ -4,7 +4,12 @@ import openmdao.api as om
 
 class HeatExchanger(om.ExplicitComponent):
     """
-    Computes heat transfer based on effectiveness
+    Computes heat transfer based on effectiveness.
+    The component is designed to work with two duct elements
+    by connecting the total temperature, Cp and mass flow inputs
+    to the inflow of those components.  The component then
+    computes the heat transfer rate based on an input effectiveness
+    which should then be connected back to the ducts.
     """
 
     def setup(self):
