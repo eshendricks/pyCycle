@@ -22,25 +22,22 @@ class Chem_Potential_Calcs(om.ExplicitComponent):
 
         self.add_output('mu', val=np.ones((num_prods,nn)), units=None) #Fix units
 
+        # Replace the partial derivatives with analytic calculations
         ar = np.arange(nn*num_prods)
         self.declare_partials('mu',['P','n'], method='cs')
         self.declare_partials('mu','H0', val=1, rows=ar, cols=ar)
         self.declare_partials('mu','S0', val=-1, rows=ar, cols=ar)
 
     def compute(self, inputs, outputs):
-        prod_list = self.options['prod_list']
-        num_prods = len(prod_list)
 
         n_moles = np.sum(inputs['n'], axis=0)
 
-        outputs['mu'] = inputs['H0'] - inputs['S0'] + np.log(inputs['n']) + np.log(inputs['P']/P_REF) - np.log(n_moles)
+        # For cases where concentrations get small or go to zero,
+        # set a lower value the concentration for computing mu
+        n = np.where(inputs['n']>1e-10, inputs['n'], 1e-10)
 
-        # print('mu', outputs['mu'])
-        # print('H0', inputs['H0'])
-        # print('S0', inputs['S0'])
-        # print('n_p', inputs['n'])
-        # print('P', inputs['P']/P_REF)
-        # print('n_moles', n_moles)
+        outputs['mu'] = inputs['H0'] - inputs['S0'] + np.log(n) + np.log(inputs['P']/P_REF) - np.log(n_moles)
+
 
     # def compute_partials(self, inputs, J):
     #     nn = self.options['num_nodes']

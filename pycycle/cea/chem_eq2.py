@@ -33,45 +33,41 @@ class ChemEq2(om.ImplicitComponent):
 
         self.add_output('n', val=np.ones((num_prods,nn)),
                         desc="mole fractions of the mixture",
-                        lower=1e-10,
+                        lower=0.,
                         res_ref=10000.
                         )
 
-        # self.declare_partials('*','*', method='cs')
+        # Replace the partial derivatives with analytic calculations
         self.declare_partials('pi','n', method='cs')
         self.declare_partials('pi','b0', method='cs')
         self.declare_partials('n','mu', method='cs')
         self.declare_partials('n','pi', method='cs')
 
-        ar_elems = np.arange(num_elements)
-        ar_prods = np.arange(num_prods)
+        # ar_elems = np.arange(num_elements)
+        # ar_prods = np.arange(num_prods)
         # self.declare_partials('pi','n', val=thermo_data.aij)
         # self.declare_partials('pi','b0', rows=ar_elems, cols=ar_elems, val=-1.)
         # # self.declare_partials('pi','pi')
         # self.declare_partials('n','mu', rows=ar_prods, cols=ar_prods, val=1.)
         # self.declare_partials('n','pi', val=-thermo_data.aij.T)
 
+    def guess_nonlinear(self, inputs, outputs, residuals):
+        thermo_data = self.options['thermo_data']
+        aij = thermo_data.aij
+
+        # Compute initial guesses using left and right inverses of aij
+        inv_right = np.matmul(aij.T,np.linalg.inv(np.matmul(aij,aij.T)))
+        outputs['n'] = np.matmul(inv_right,inputs['b0'])
+        inv_left = np.matmul(np.linalg.inv(np.matmul(aij,aij.T)),aij)
+        outputs['pi'] = np.matmul(inv_left,inputs['mu'])
+
+        # print(outputs['n'])
+        # print(outputs['pi'])
+
     def apply_nonlinear(self, inputs, outputs, resids):
         thermo_data = self.options['thermo_data']
 
-        # print('aij', thermo_data.aij)
-        # print('n_c', outputs['n'])
-        # print('b0', inputs['b0'])
-        # print('pi_err', np.matmul(thermo_data.aij, outputs['n']) - inputs['b0'])
         resids['pi'] = np.matmul(thermo_data.aij, outputs['n']) - inputs['b0']
-        # print()
-
-
-        # print('mu',inputs['mu'])
-        # print('pi', outputs['pi'])
-        # print(thermo_data.aij.T)
-        # print('n_err', inputs['mu'] - np.matmul(thermo_data.aij.T,outputs['pi']))
-        # print('n_err', np.multiply((inputs['mu'] - np.matmul(thermo_data.aij.T,outputs['pi'])).T,np.array([0.0093051,1.,0.00465265])))
         resids['n'] = inputs['mu'] - np.matmul(thermo_data.aij.T,outputs['pi'])
-
-        # print('----------------------')
-        # print('pi',outputs['pi'],resids['pi'])
-        # print('n',outputs['n'],resids['n'])
-
 
     # def linearize(self,inputs,outputs,J):
