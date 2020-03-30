@@ -51,18 +51,23 @@ if __name__ == "__main__":
     # des_vars.add_output('P', np.array([1.034210,1.3]), units='bar')
     # des_vars.add_output('b0', np.array([[0.0227221,0.04544422],[0.0227221,0.04544422]]).T, units=None)
 
-    des_vars.add_output('T', np.array([1500]), units='degK')
-    des_vars.add_output('P', np.array([1.034210,]), units='bar')
-    des_vars.add_output('b0', np.array([0.0227221,0.04544422,0.00]).T, units=None)
+    #des_vars.add_output('T', np.array([1500]), units='degK')
+    #des_vars.add_output('P', np.array([1.034210]), units='bar')
+    #des_vars.add_output('b0', np.array([0.0227221,0.04544422,0.00]).T, units=None)
 
-    prob.model.add_subsystem('thermo', Thermo(thermo_data=test, num_nodes=1), promotes=['*'])
+    # for num_nodes = 2
+    des_vars.add_output('T', np.array([[1500], [1500]]), units='degK')
+    des_vars.add_output('P', np.array([[1.034210], [1.034210]]), units='bar')
+    des_vars.add_output('b0', np.array([[0.0227221,0.04544422,0.00], [0.0227221,0.04544422,0.00]]), units=None)
 
-    prob.setup()
+    prob.model.add_subsystem('thermo', Thermo(thermo_data=test, num_nodes=2), promotes=['*'])
+
+    prob.setup(force_alloc_complex=True)
 
     # prob['n'] = np.array([[8.15344263e-06, 2.27139552e-02, 4.07672148e-06]]).T
     # prob['chem_eq.pi'] = np.array([[-25.34234058, -18.19254736]]).T
     prob.run_model()
-    # prob.check_partials()
+    prob.check_partials(method='cs')
 
     print(prob['n'])
     print(prob['chem_eq.pi'])
