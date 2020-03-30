@@ -24,19 +24,19 @@ class Chem_Potential_Calcs(om.ExplicitComponent):
 
         # Replace the partial derivatives with analytic calculations
         ar = np.arange(nn*num_prods)
-        self.declare_partials('mu',['P','n'], method='cs')
+        self.declare_partials('mu',['P','n'], method='cs', step=1e-15)
         self.declare_partials('mu','H0', val=1, rows=ar, cols=ar)
         self.declare_partials('mu','S0', val=-1, rows=ar, cols=ar)
 
     def compute(self, inputs, outputs):
 
-        n_moles = np.sum(inputs['n'], axis=0)
+        n_moles = np.sum(inputs['n'], axis=1)
 
         # For cases where concentrations get small or go to zero,
         # set a lower value the concentration for computing mu
         n = np.where(inputs['n']>1e-10, inputs['n'], 1e-10)
 
-        outputs['mu'] = inputs['H0'] - inputs['S0'] + np.log(n) + np.log(inputs['P']/P_REF)[..., np.newaxis] - np.log(n_moles)
+        outputs['mu'] = inputs['H0'] - inputs['S0'] + np.log(n) + np.log(inputs['P']/P_REF)[..., np.newaxis] - np.log(n_moles)[..., np.newaxis]
 
 
     # def compute_partials(self, inputs, J):

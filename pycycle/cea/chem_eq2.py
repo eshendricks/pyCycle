@@ -77,5 +77,3 @@ class ChemEq2(om.ImplicitComponent):
         resids['pi'] = np.einsum('ij,kj->ki', thermo_data.aij, outputs['n']) - inputs['b0']
         resids['n'] = inputs['mu'] - np.einsum('ji,kj->ki', thermo_data.aij, outputs['pi'])
 
-        print(inputs['mu'], outputs['pi'], outputs['n'])
-

@@ -62,12 +62,12 @@ if __name__ == "__main__":
 
     prob.model.add_subsystem('thermo', Thermo(thermo_data=test, num_nodes=2), promotes=['*'])
 
-    prob.setup()
+    prob.setup(force_alloc_complex=True)
 
     # prob['n'] = np.array([[8.15344263e-06, 2.27139552e-02, 4.07672148e-06]]).T
     # prob['chem_eq.pi'] = np.array([[-25.34234058, -18.19254736]]).T
     prob.run_model()
-    prob.check_partials()
+    prob.check_partials(method='cs')
 
     print(prob['n'])
     print(prob['chem_eq.pi'])
