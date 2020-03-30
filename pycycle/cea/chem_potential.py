@@ -16,11 +16,11 @@ class Chem_Potential_Calcs(om.ExplicitComponent):
         num_prods = len(prod_list)
 
         self.add_input('P', val=np.ones(nn), units="bar", desc="Pressure")
-        self.add_input('n', val=np.ones((num_prods,nn)), desc="Mass fractions of products")
-        self.add_input('H0', val=np.ones((num_prods,nn)), units=None) #Fix units
-        self.add_input('S0', val=np.ones((num_prods,nn)), units=None) #Fix units
+        self.add_input('n', val=np.ones((nn, num_prods)), desc="Mass fractions of products")
+        self.add_input('H0', val=np.ones((nn, num_prods)), units=None) #Fix units
+        self.add_input('S0', val=np.ones((nn, num_prods)), units=None) #Fix units
 
-        self.add_output('mu', val=np.ones((num_prods,nn)), units=None) #Fix units
+        self.add_output('mu', val=np.ones((nn, num_prods)), units=None) #Fix units
 
         # Replace the partial derivatives with analytic calculations
         ar = np.arange(nn*num_prods)
@@ -36,7 +36,7 @@ class Chem_Potential_Calcs(om.ExplicitComponent):
         # set a lower value the concentration for computing mu
         n = np.where(inputs['n']>1e-10, inputs['n'], 1e-10)
 
-        outputs['mu'] = inputs['H0'] - inputs['S0'] + np.log(n) + np.log(inputs['P']/P_REF) - np.log(n_moles)
+        outputs['mu'] = inputs['H0'] - inputs['S0'] + np.log(n) + np.log(inputs['P']/P_REF)[..., np.newaxis] - np.log(n_moles)
 
 
     # def compute_partials(self, inputs, J):
@@ -82,8 +82,8 @@ class Chem_Potential(om.Group):
             self.add_subsystem('HS_'+prod, table, promotes_inputs=['T'])
 
         mux_comp = self.add_subsystem(name='mux', subsys=om.MuxComp(vec_size=len(prod_list)))
-        mux_comp.add_var('H0', shape=(nn,), axis=0, units=None)
-        mux_comp.add_var('S0', shape=(nn,), axis=0, units=None)
+        mux_comp.add_var('H0', shape=(nn,), axis=1, units=None)
+        mux_comp.add_var('S0', shape=(nn,), axis=1, units=None)
 
         for num, prod in enumerate(prod_list):
             self.connect('HS_%s.H0_T'%prod,'mux.H0_%i'%num)
@@ -124,6 +124,6 @@ if __name__ == "__main__":
     print('H0', prob['mux.H0'])
     print('S0', prob['mux.S0'])
     print('mu', prob['mu'])
-    
+
     prob.check_partials()
 
