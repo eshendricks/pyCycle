@@ -17,10 +17,7 @@ class ChemEq2(om.ImplicitComponent):
         nn = self.options['num_nodes']
 
         num_prods = len(list(thermo_data.products.keys()))
-        num_elements = len(list(thermo_data.elements.keys()))
-
-        # self.add_input('P', val=1.0*np.ones(nn), units="bar", desc="Pressure")
-        # self.add_input('T', val=400.*np.ones(nn), units="degK", desc="Temperature")
+        num_elements = len(thermo_data.elements)
 
         self.add_input('b0', val=np.ones((nn, num_elements)),
                         desc='assigned kg-atoms of element i per total kg of reactant '
@@ -61,12 +58,12 @@ class ChemEq2(om.ImplicitComponent):
         thermo_data = self.options['thermo_data']
         aij = thermo_data.aij
 
-        aij_inv = np.linalg.inv(np.matmul(aij,aij.T))
-        # Compute initial guesses using left and right inverses of aij
-        inv_right = np.matmul(aij.T, aij_inv)
-        outputs['n'] = np.einsum('ij,kj->ki', inv_right, inputs['b0'])
-        inv_left = np.matmul(aij_inv, aij)
-        outputs['pi'] = np.einsum('ij,kj->ki', inv_left, inputs['mu'])
+        # aij_inv = np.linalg.inv(np.matmul(aij,aij.T))
+        # # Compute initial guesses using left and right inverses of aij
+        # inv_right = np.matmul(aij.T, aij_inv)
+        # outputs['n'] = np.einsum('ij,kj->ki', inv_right, inputs['b0'])
+        # inv_left = np.matmul(aij_inv, aij)
+        # outputs['pi'] = np.einsum('ij,kj->ki', inv_left, inputs['mu'])
 
         # print(outputs['n'])
         # print(outputs['pi'])
@@ -77,3 +74,5 @@ class ChemEq2(om.ImplicitComponent):
         resids['pi'] = np.einsum('ij,kj->ki', thermo_data.aij, outputs['n']) - inputs['b0']
         resids['n'] = inputs['mu'] - np.einsum('ji,kj->ki', thermo_data.aij, outputs['pi'])
 
+        # print('pi', resids['pi'])
+        # print('n', resids['n'])

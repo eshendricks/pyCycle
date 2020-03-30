@@ -263,17 +263,18 @@ class TestComposition(object):
         ('O2', 0),
     ])
 
-    elements = OrderedDict([
-        ('C', {
-            'wt': 12.01
-            }),
-        ('O', {
-            'wt': 16.0
-            }),
-        ('H', {
-            'wt': 1.00794
-          })
-    ])
+    elements = ['C', 'O', 'H']
+    # elements = OrderedDict([
+    #     ('C', {
+    #         'wt': 12.01
+    #         }),
+    #     ('O', {
+    #         'wt': 16.0
+    #         }),
+    #     ('H', {
+    #         'wt': 1.00794
+    #       })
+    # ])
 
     element_wts = {
       'C':12.01, 'O': 16.0,
