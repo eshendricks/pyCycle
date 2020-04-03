@@ -6,6 +6,7 @@ import numpy as np
 from openmdao.api import Problem, IndepVarComp
 from openmdao.utils.assert_utils import assert_rel_error
 
+from pycycle.cea import species_data
 from pycycle.cea.species_data import janaf
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
@@ -23,6 +24,8 @@ class TestSetStaticMN(unittest.TestCase):
 
     def test_case_MN(self):
 
+        thermo = species_data.Thermo(janaf)
+
         p = Problem()
 
         indeps = p.model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
@@ -30,6 +33,7 @@ class TestSetStaticMN(unittest.TestCase):
         indeps.add_output('P', val=14.7, units='psi')
         indeps.add_output('W', val=1.5, units='lbm/s')
         indeps.add_output('MN', val=1.5, units=None)
+        indeps.add_output('b0', np.sum(thermo.aij*thermo.init_prod_amounts, axis=1))
 
         p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf))
         p.model.add_subsystem('set_static_MN', SetStatic(mode='MN', thermo_data=janaf))
@@ -42,6 +46,7 @@ class TestSetStaticMN(unittest.TestCase):
         p.model.connect('set_total_TP.flow:gamma', 'set_static_MN.guess:gamt')
         p.model.connect('W', 'set_static_MN.W')
         p.model.connect('MN', 'set_static_MN.MN')
+        p.model.connect('b0', ['set_total_TP.b0', 'set_static_MN.b0'])
 
         p.set_solver_print(level=-1)
         p.setup(check=False)

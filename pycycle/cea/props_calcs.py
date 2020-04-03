@@ -89,7 +89,6 @@ class PropsCalcs(ExplicitComponent):
             P = 1e-5
             val = (S0_T+np.log(n_moles/nj/(P/P_REF)))
 
-
         outputs['S'] = R_UNIVERSAL_ENG * np.sum(nj*val)
         outputs['Cp'] = Cp = (Cpe+Cpf)*R_UNIVERSAL_ENG
         outputs['Cv'] = Cv = Cp + n_moles*R_UNIVERSAL_ENG*dlnVqdlnT**2/dlnVqdlnP

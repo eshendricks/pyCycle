@@ -1,5 +1,6 @@
 import unittest
 from openmdao.api import Problem, IndepVarComp
+import numpy as np
 
 from pycycle.cea import species_data
 from pycycle.cea.set_total import SetTotal
@@ -7,40 +8,49 @@ from pycycle.cea.set_total import SetTotal
 from openmdao.utils.assert_utils import assert_rel_error
 
 
-# class _TestJanafThermo(unittest.TestCase):
+class _TestJanafThermo(unittest.TestCase):
 
-    # def test_std_day(self):
+    def test_std_day(self):
 
-    #     top = Problem()
-    #     top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
-    #     indeps = top.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
-    #     indeps.add_output('T', 287.778, units='degK')
-    #     indeps.add_output('P', 1.02069, units='bar')
-    #     top.setup(check=False)
+        thermo = species_data.Thermo(species_data.janaf)
 
-    #     top.run_model()
+        top = Problem()
+        top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
+        indeps = top.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
+        indeps.add_output('T', 287.778, units='degK')
+        indeps.add_output('P', 1.02069, units='bar')
+        indeps.add_output('b0', np.sum(thermo.aij*thermo.init_prod_amounts, axis=1))
+        top.setup(check=False)
 
-    #     assert_rel_error(self, top['gamma'], 1.40023310084, 1e-4)
+        top.run_model()
 
-    # def test_mid_temp(self):
+        assert_rel_error(self, top['gamma'], 1.40023310084, 1e-4)
 
-    #     top = Problem()
-    #     top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
-    #     indeps = top.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
-    #     indeps.add_output('T', 1500, units='degK')
-    #     indeps.add_output('P', 1.02069, units='bar')
+    def test_mid_temp(self):
 
-    #     top.setup(check=False)
+        thermo = species_data.Thermo(species_data.janaf)
 
-    #     top.run_model()
+        top = Problem()
+        top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
+        indeps = top.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
+        indeps.add_output('T', 1500, units='degK')
+        indeps.add_output('P', 1.02069, units='bar')
+        indeps.add_output('b0', np.sum(thermo.aij*thermo.init_prod_amounts, axis=1))
 
-    #     assert_rel_error(self, top['gamma'], 1.30444205736, 1e-4)  # 1.30444
-    #     assert_rel_error(self, top['flow:S'], 2.05758694175, 1e-4)  # NPSS 2.05717
+        top.setup(check=False)
+
+        top.run_model()
+
+        assert_rel_error(self, top['gamma'], 1.30444205736, 1e-4)  # 1.30444
+        assert_rel_error(self, top['flow:S'], 2.05758694175, 1e-4)  # NPSS 2.05717
 
 
 class TestSetTotalEquivilence(unittest.TestCase):
 
     def setUp(self):
+
+        thermo = species_data.Thermo(species_data.janaf)
+
         self.tp_set = Problem(SetTotal(thermo_data=species_data.janaf, mode='T'))
         self.hp_set = Problem(SetTotal(thermo_data=species_data.janaf, mode='h'))
         self.sp_set = Problem(SetTotal(thermo_data=species_data.janaf, mode='S'))
@@ -48,16 +58,19 @@ class TestSetTotalEquivilence(unittest.TestCase):
         indeps = self.tp_set.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
         indeps.add_output('T', 518., units="degR")
         indeps.add_output('P', 14.7, units="psi")
+        indeps.add_output('b0', np.sum(thermo.aij*thermo.init_prod_amounts, axis=1))
         self.tp_set.setup(check=False)
 
         indeps = self.hp_set.model.add_subsystem('des_vars', IndepVarComp(), promotes=["*"])
         indeps.add_output('P', 14.7, units="psi")
         indeps.add_output('h', 1., units="Btu/lbm")
+        indeps.add_output('b0', np.sum(thermo.aij*thermo.init_prod_amounts, axis=1))
         self.hp_set.setup(check=False)
 
         indeps = self.sp_set.model.add_subsystem('des_vars', IndepVarComp(), promotes=["*"])
         indeps.add_output('P', 14.7, units="psi")
         indeps.add_output('S', 1., units="Btu/(lbm*degR)")  # 'cal/(g*degK)'
+        indeps.add_output('b0', np.sum(thermo.aij*thermo.init_prod_amounts, axis=1))
         self.sp_set.setup(check=False)
 
         # from  openmdao.api import view_model

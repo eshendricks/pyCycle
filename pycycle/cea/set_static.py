@@ -36,18 +36,18 @@ class SetStatic(om.Group):
         # have to promote things differently depending on which mode we are
         if mode == 'Ps':
             self.add_subsystem('statics', statics,
-                               promotes_inputs=[('P', 'Ps'), 'S', 'ht', 'W', 'init_prod_amounts'],
+                               promotes_inputs=[('P', 'Ps'), 'S', 'ht', 'W', 'b0'],
                                promotes_outputs=['MN', 'V', 'Vsonic', 'area',
                                                  'T', 'h', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles'])
         elif mode == 'MN':
             self.add_subsystem('statics', statics,
-                               promotes_inputs=['MN', 'S', 'ht', 'W', 'guess:*', 'init_prod_amounts'],
+                               promotes_inputs=['MN', 'S', 'ht', 'W', 'guess:*', 'b0'],
                                promotes_outputs=['V', 'Vsonic', 'area',
                                                  'Ps', 'T', 'h', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles'])
 
         else:
             self.add_subsystem('statics', statics,
-                               promotes_inputs=['area', 'S', 'ht', 'W', 'guess:*', 'init_prod_amounts'],
+                               promotes_inputs=['area', 'S', 'ht', 'W', 'guess:*', 'b0'],
                                promotes_outputs=['V', 'Vsonic', 'MN',
                                                  'Ps', 'T', 'h', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles'])
 

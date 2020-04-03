@@ -9,6 +9,7 @@ import numpy as np
 from openmdao.api import Problem, IndepVarComp
 from openmdao.utils.assert_utils import assert_rel_error
 
+from pycycle.cea import species_data
 from pycycle.cea.species_data import janaf
 from pycycle.cea.set_total import SetTotal
 from pycycle.cea.set_static import SetStatic
@@ -26,6 +27,8 @@ class TestSetStaticArea(unittest.TestCase):
 
     def test_case_Area(self):
 
+        thermo = species_data.Thermo(janaf)
+
         p = Problem()
 
         indeps = p.model.add_subsystem('indeps', IndepVarComp(), promotes=['*'])
@@ -33,6 +36,7 @@ class TestSetStaticArea(unittest.TestCase):
         indeps.add_output('P', val=14.7, units='psi')
         indeps.add_output('W', val=1.5, units='lbm/s')
         indeps.add_output('area', val=np.inf, units='inch**2')
+        indeps.add_output('b0', np.sum(thermo.aij*thermo.init_prod_amounts, axis=1))
 
         p.model.add_subsystem('set_total_TP', SetTotal(thermo_data=janaf))
         p.model.add_subsystem('set_static_A', SetStatic(mode='area', thermo_data=janaf))
@@ -47,6 +51,7 @@ class TestSetStaticArea(unittest.TestCase):
         p.model.connect('area', 'set_static_A.area')
         p.model.connect('set_total_TP.flow:gamma', 'set_static_A.guess:gamt')
         #p.model.connect('set_total_TP.flow:n', 'set_static_A.n_guess')
+        p.model.connect('b0', ['set_total_TP.b0', 'set_static_A.b0'])
 
         p.set_solver_print(level=-1)
         p.setup(check=False)
