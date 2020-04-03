@@ -92,10 +92,12 @@ class Splitter(om.Group):
         statics = self.options['statics']
         design = self.options['design']
 
-        num_prod = species_data.Thermo(thermo_data, init_reacts=elements).num_prod
+        gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        num_prod = gas_thermo.num_prod
+        num_element = gas_thermo.num_element
 
         # Create inlet flowstation
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod)
+        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_element=num_element)
         self.add_subsystem('flow_in', flow_in, promotes_inputs=('Fl_I:*',))
 
         # Split the flows

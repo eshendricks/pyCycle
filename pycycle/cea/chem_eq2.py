@@ -30,7 +30,7 @@ class ChemEq2(om.ImplicitComponent):
 
         self.add_output('n', val=np.ones((nn, num_prods)),
                         desc="mole fractions of the mixture",
-                        lower=0.,
+                        lower=1e-10,
                         res_ref=10000.
                         )
 
@@ -54,6 +54,8 @@ class ChemEq2(om.ImplicitComponent):
 
         self.declare_partials('n', 'pi', rows=rows, cols=cols, val=val)
 
+        # self.declare_partials('*','*', method='cs')
+
     def guess_nonlinear(self, inputs, outputs, residuals):
         thermo_data = self.options['thermo_data']
         aij = thermo_data.aij
@@ -70,9 +72,26 @@ class ChemEq2(om.ImplicitComponent):
 
     def apply_nonlinear(self, inputs, outputs, resids):
         thermo_data = self.options['thermo_data']
+        n_moles = np.sum(outputs['n'], axis=0)
+        
+        resid_n = inputs['mu'] - np.einsum('ji,kj->ki', thermo_data.aij, outputs['pi'])
+        resid_wts = (1 / (1 + np.exp(-1e5 * outputs['n']*n_moles)) - .5) * 2
+        resid_n *= resid_wts
 
+        if np.linalg.norm(resids['n']) < 1e-4:
+            trace = np.where(outputs['n'] <= 1e-10+1e-20)
+            resid_n[trace] = 0.
+
+
+        resids['n'] = resid_n
         resids['pi'] = np.einsum('ij,kj->ki', thermo_data.aij, outputs['n']) - inputs['b0']
-        resids['n'] = inputs['mu'] - np.einsum('ji,kj->ki', thermo_data.aij, outputs['pi'])
 
+
+
+
+        print('n', outputs['n'])
+        print('pi', outputs['pi'])
         # print('pi', resids['pi'])
         # print('n', resids['n'])
+        # print('n_moles',n_moles)
+        # print('wts',resids['n']*resid_wts)

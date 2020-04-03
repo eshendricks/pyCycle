@@ -23,8 +23,8 @@ class SetTotalTestCase(unittest.TestCase):
         r.add_subsystem(
             'n_init',
             IndepVarComp(
-                'init_prod_amounts',
-                thermo.init_prod_amounts),
+                'b0',
+                val=np.sum(thermo.aij*thermo.init_prod_amounts, axis=1)),
             promotes=["*"])
         r.add_subsystem('T_init', IndepVarComp('T', 4000., units='degK'), promotes=["*"])
         r.add_subsystem('P_init', IndepVarComp('P', 1.034210, units="bar"), promotes=["*"])
@@ -83,8 +83,8 @@ class SetTotalTestCase(unittest.TestCase):
         r.add_subsystem(
             'n_init',
             IndepVarComp(
-                'init_prod_amounts',
-                thermo.init_prod_amounts),
+                'b0',
+                val=np.sum(thermo.aij*thermo.init_prod_amounts, axis=1)),
             promotes=["*"])
         r.add_subsystem('h_init', IndepVarComp('h', 340, units='cal/g'), promotes=["*"])
         r.add_subsystem('P_init', IndepVarComp('P', 1.034210, units='bar'), promotes=["*"])
@@ -145,8 +145,8 @@ class SetTotalTestCase(unittest.TestCase):
         r.add_subsystem(
             'n_init',
             IndepVarComp(
-                'init_prod_amounts',
-                thermo.init_prod_amounts),
+                'b0',
+                val=np.sum(thermo.aij*thermo.init_prod_amounts, axis=1)),
             promotes=["*"])
         r.add_subsystem(
             'S_init',

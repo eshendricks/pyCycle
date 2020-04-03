@@ -4,7 +4,7 @@ from openmdao.api import Problem, Group, IndepVarComp
 
 from openmdao.utils.assert_utils import assert_rel_error
 
-from pycycle.cea.chem_eq import ChemEq
+from pycycle.cea.chem_eq3 import ChemEq
 from pycycle.cea import species_data
 
 

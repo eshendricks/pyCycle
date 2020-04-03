@@ -7,35 +7,35 @@ from pycycle.cea.set_total import SetTotal
 from openmdao.utils.assert_utils import assert_rel_error
 
 
-class _TestJanafThermo(unittest.TestCase):
+# class _TestJanafThermo(unittest.TestCase):
 
-    def test_std_day(self):
+    # def test_std_day(self):
 
-        top = Problem()
-        top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
-        indeps = top.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
-        indeps.add_output('T', 287.778, units='degK')
-        indeps.add_output('P', 1.02069, units='bar')
-        top.setup(check=False)
+    #     top = Problem()
+    #     top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
+    #     indeps = top.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
+    #     indeps.add_output('T', 287.778, units='degK')
+    #     indeps.add_output('P', 1.02069, units='bar')
+    #     top.setup(check=False)
 
-        top.run_model()
+    #     top.run_model()
 
-        assert_rel_error(self, top['gamma'], 1.40023310084, 1e-4)
+    #     assert_rel_error(self, top['gamma'], 1.40023310084, 1e-4)
 
-    def test_mid_temp(self):
+    # def test_mid_temp(self):
 
-        top = Problem()
-        top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
-        indeps = top.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
-        indeps.add_output('T', 1500, units='degK')
-        indeps.add_output('P', 1.02069, units='bar')
+    #     top = Problem()
+    #     top.model = SetTotal(thermo_data=species_data.janaf, mode="T")
+    #     indeps = top.model.add_subsystem('indeps', IndepVarComp(), promotes=["*"])
+    #     indeps.add_output('T', 1500, units='degK')
+    #     indeps.add_output('P', 1.02069, units='bar')
 
-        top.setup(check=False)
+    #     top.setup(check=False)
 
-        top.run_model()
+    #     top.run_model()
 
-        assert_rel_error(self, top['gamma'], 1.30444205736, 1e-4)  # 1.30444
-        assert_rel_error(self, top['flow:S'], 2.05758694175, 1e-4)  # NPSS 2.05717
+    #     assert_rel_error(self, top['gamma'], 1.30444205736, 1e-4)  # 1.30444
+    #     assert_rel_error(self, top['flow:S'], 2.05758694175, 1e-4)  # NPSS 2.05717
 
 
 class TestSetTotalEquivilence(unittest.TestCase):

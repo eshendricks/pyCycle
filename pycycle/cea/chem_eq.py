@@ -68,10 +68,14 @@ class ChemEq(om.ImplicitComponent):
         num_element = thermo.num_element
 
         # Input vars
-        self.add_input('init_prod_amounts', val=thermo.init_prod_amounts, shape=(num_prod,),
-                       desc="initial mass fractions of products, before equilibrating")
+        # self.add_input('init_prod_amounts', val=thermo.init_prod_amounts, shape=(num_prod,),
+        #                desc="initial mass fractions of products, before equilibrating")
 
         self.add_input('P', val=1.0, units="bar", desc="Pressure")
+
+        self.add_input('b0', val=np.sum(thermo.aij*thermo.init_prod_amounts, axis=1), shape=num_element,  # when converged, b0=b
+                        desc='assigned kg-atoms of element i per total kg of reactant '
+                             'for the initial prod amounts')
 
         if mode == "T":  # T is an input
             self.add_input('T', val=400., units="degK", desc="Temperature")
@@ -111,9 +115,9 @@ class ChemEq(om.ImplicitComponent):
                         desc="modified lagrange multipliers from the Gibbs lagrangian")
 
         # Explicit Outputs
-        self.add_output('b0', shape=num_element,  # when converged, b0=b
-                        desc='assigned kg-atoms of element i per total kg of reactant '
-                             'for the initial prod amounts')
+        # self.add_output('b0', shape=num_element,  # when converged, b0=b
+        #                 desc='assigned kg-atoms of element i per total kg of reactant '
+        #                      'for the initial prod amounts')
         self.add_output('n_moles', lower=1e-10, val=0.034, shape=1,
                         desc="1/molecular weight of gas")
 
@@ -137,9 +141,11 @@ class ChemEq(om.ImplicitComponent):
         # self.deriv_options['type'] = 'fd'
         # self.deriv_options['step_size'] = 1e-5
 
+        # self.declare_partials('*','*', method='fd')
         self.declare_partials('n', ['n', 'pi', 'P', 'T'])
-        self.declare_partials('pi', ['n', 'init_prod_amounts'])
-        self.declare_partials('b0', ['b0', 'init_prod_amounts'])
+        self.declare_partials('pi', 'n')
+        self.declare_partials('pi','b0')
+        # self.declare_partials('b0', ['b0', 'init_prod_amounts'])
         self.declare_partials('n_moles', 'n')
         self.declare_partials('n_moles', 'n_moles', val=-1)
 
@@ -172,8 +178,8 @@ class ChemEq(om.ImplicitComponent):
         resids['n_moles'] = n_moles - outputs['n_moles']
 
         # Output equation for b0
-        b0 = np.sum(thermo.aij * inputs['init_prod_amounts'], axis=1)
-        resids['b0'] = b0 - outputs['b0']
+        # b0 = np.sum(thermo.aij * inputs['init_prod_amounts'], axis=1)
+        # resids['b0'] = b0 - outputs['b0']
 
         try:
             self.H0_T = H0_T = thermo.H0(T)
@@ -215,7 +221,7 @@ class ChemEq(om.ImplicitComponent):
         resids['n'] = resids_n
 
         # residuals from the conservation of mass
-        resids['pi'] = np.sum(thermo.aij * n, axis=1) - b0
+        resids['pi'] = np.sum(thermo.aij * n, axis=1) - inputs['b0']
 
         # residuals from temperature equation when T is a state
         if mode == "h":
@@ -286,9 +292,11 @@ class ChemEq(om.ImplicitComponent):
 
         J['pi', 'n'] = dRdy[num_prod:end_element, :num_prod]
 
-        J['pi', 'init_prod_amounts'] = -np.array(thermo.aij, dtype=float)
-        J['b0', 'init_prod_amounts'] = np.array(thermo.aij, dtype=float)
-        J['b0', 'b0'] = -np.eye(num_element)
+        # J['pi', 'init_prod_amounts'] = -np.array(thermo.aij, dtype=float)
+        # J['b0', 'init_prod_amounts'] = np.array(thermo.aij, dtype=float)
+        # J['b0', 'b0'] = -np.eye(num_element)
+
+        J['pi','b0'] = -np.eye(num_element)
 
         if mode == 'h':
             J['T', 'n'] = dRdy[-1, :num_prod].reshape(1, num_prod)
@@ -435,13 +443,14 @@ if __name__ == "__main__":
 
     prob = om.Problem()
     prob.model = om.Group()
-    prob.model.nonlinear_solver = om.NonLinearRunOnce()
-    prob.model.linear_solver = om.LinearRunOnce()
+    # prob.model.nonlinear_solver = om.NonLinearRunOnce()
+    # prob.model.linear_solver = om.LinearRunOnce()
 
     des_vars = prob.model.add_subsystem('des_vars', om.IndepVarComp(), promotes=["*"])
     des_vars.add_output('P', 1.034210, units='psi')
     des_vars.add_output('h', -24.26682261, units='cal/g')
     des_vars.add_output('init_prod_amounts', thermo.init_prod_amounts)
+    des_vars.add_output('b0', np.array([3.23319258e-04,1.10132241e-05,5.39157736e-02,1.44860147e-02]))
 
     chemeq = prob.model.add_subsystem('chemeq', ChemEq(thermo=thermo, mode="h"), promotes=["*"])
 
@@ -462,4 +471,4 @@ if __name__ == "__main__":
     # print(prob['pi'], prob.model._residuals['pi'])
 
 
-    # prob.check_partial_derivatives()
+    prob.check_partials()

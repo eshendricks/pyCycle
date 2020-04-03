@@ -69,8 +69,8 @@ class SetTotal(om.Group):
         thermo = Thermo(thermo_data, init_reacts)
 
         # chem_eq calculations
-        in_vars = ('init_prod_amounts', 'P')
-        out_vars = ('n', 'n_moles', 'b0')
+        in_vars = ('b0', 'P')
+        out_vars = ('n', 'n_moles')
         if mode == 'T':
             in_vars += ('T', )
         elif mode == 'h':
@@ -121,7 +121,7 @@ class SetTotal(om.Group):
 
         else:
             self.add_subsystem('flow', EngUnitProps(thermo=thermo, fl_name=fl_name),
-                               promotes_inputs=('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R'),
+                               promotes_inputs=('T', 'P', 'h', 'S', 'gamma', 'Cp', 'Cv', 'rho', 'n', 'n_moles', 'R', 'b0'),
                                promotes_outputs=('{}:*'.format(fl_name),))
 
 

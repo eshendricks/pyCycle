@@ -92,12 +92,12 @@ class Inlet(om.Group):
         statics = self.options['statics']
         design = self.options['design']
 
-        gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
-        gas_prods = gas_thermo.products
-        num_prod = len(gas_prods)
+        thermo = species_data.Thermo(thermo_data, init_reacts=elements)
+        num_prod = thermo.num_prod
+        num_element = thermo.num_element
 
         # Create inlet flow station
-        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod)
+        flow_in = FlowIn(fl_name='Fl_I', num_prods=num_prod, num_element=num_element)
         self.add_subsystem('flow_in', flow_in, promotes=['Fl_I:tot:*', 'Fl_I:stat:*'])
 
         # Perform inlet engineering calculations

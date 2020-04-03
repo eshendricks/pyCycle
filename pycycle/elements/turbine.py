@@ -523,14 +523,16 @@ class Turbine(om.Group):
         gas_thermo = species_data.Thermo(thermo_data, init_reacts=elements)
         self.gas_prods = gas_thermo.products
         self.num_prod = len(self.gas_prods)
+        num_element = gas_thermo.num_element
 
         bld_thermo = species_data.Thermo(
             thermo_data, init_reacts=bleed_elements)
         self.bld_prods = bld_thermo.products
         self.num_bld_prod = len(self.bld_prods)
+        num_bld_element = bld_thermo.num_element
 
         # Create inlet flow station
-        in_flow = FlowIn(fl_name='Fl_I', num_prods=self.num_prod)
+        in_flow = FlowIn(fl_name='Fl_I', num_prods=self.num_prod, num_element=num_element)
         self.add_subsystem('in_flow', in_flow, promotes_inputs=['Fl_I:*'])
 
         self.add_subsystem('corrinputs', CorrectedInputsCalc(),
@@ -564,7 +566,7 @@ class Turbine(om.Group):
         # self.connect("ideal_flow.h", "enth_drop.ht_out_ideal")
 
         for BN in bleeds:
-            bld_flow = FlowIn(fl_name=BN, num_prods=self.num_bld_prod)
+            bld_flow = FlowIn(fl_name=BN, num_prods=self.num_bld_prod, num_element=num_bld_element)
             self.add_subsystem(BN, bld_flow, promotes_inputs=[
                                '{}:*'.format(BN)])
 

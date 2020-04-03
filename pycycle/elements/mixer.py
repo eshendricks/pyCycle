@@ -277,13 +277,15 @@ class Mixer(om.Group):
         flow1_elements = self.options['Fl_I1_elements']
         flow1_thermo = Thermo(thermo_data, init_reacts=flow1_elements)
         n_flow1_prods = len(flow1_thermo.products)
-        in_flow = FlowIn(fl_name='Fl_I1', num_prods=n_flow1_prods)
+        n_flow1_element = flow1_thermo.num_element
+        in_flow = FlowIn(fl_name='Fl_I1', num_prods=n_flow1_prods, num_element=n_flow1_element)
         self.add_subsystem('in_flow1', in_flow, promotes=['Fl_I1:*'])
 
         flow2_elements = self.options['Fl_I2_elements']
         flow2_thermo = Thermo(thermo_data, init_reacts=flow2_elements)
         n_flow2_prods = len(flow2_thermo.products)
-        in_flow = FlowIn(fl_name='Fl_I2', num_prods=n_flow2_prods)
+        n_flow2_element = flow2_thermo.num_element
+        in_flow = FlowIn(fl_name='Fl_I2', num_prods=n_flow2_prods, num_element=n_flow2_element)
         self.add_subsystem('in_flow2', in_flow, promotes=['Fl_I2:*'])
 
 
