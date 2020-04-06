@@ -14,20 +14,22 @@ class FlowStart(Group):
                               desc='thermodynamic data set', recordable=False)
         self.options.declare('elements', default=AIR_MIX,
                               desc='set of elements present in the flow')
-
+        self.options.declare('initial_b0_provided', default=False)
         self.options.declare('statics', default=True,
                               desc='If True, calculate static properties.')
 
     def setup(self):
         thermo_data = self.options['thermo_data']
         elements = self.options['elements']
+        init_b0 = self.options['initial_b0_provided']
 
         thermo = species_data.Thermo(thermo_data, init_reacts=elements)
         self.air_prods = thermo.products
         self.num_prod = len(self.air_prods)
 
-        # set initial mass compowtition based on init_prod_amounts of selected thermo_data
-        self.add_subsystem('b0_init', IndepVarComp('b0',np.sum(thermo.aij*thermo.init_prod_amounts, axis=1)), promotes_outputs=['b0'])
+        # set initial mass compowtition based on init_prod_amounts of selected thermo_data unless specified by user
+        if not init_b0:
+            self.add_subsystem('b0_init', IndepVarComp('b0',np.sum(thermo.aij*thermo.init_prod_amounts, axis=1)), promotes_outputs=['b0'])
 
         set_TP = SetTotal(mode="T", fl_name="Fl_O:tot",
                           thermo_data=thermo_data,
