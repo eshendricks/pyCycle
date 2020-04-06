@@ -308,7 +308,7 @@ class Mixer(om.Group):
                                     init_reacts=flow1_elements,
                                     fl_name="Fl_I1_calc:stat")
                 self.add_subsystem('Fl_I1_stat_calc', Fl1_stat,
-                                   promotes_inputs=[('b0', 'Fl_I1:stat:b0'), ('S', 'Fl_I1:tot:S'),
+                                   promotes_inputs=[('b0', 'Fl_I1:tot:b0'), ('S', 'Fl_I1:tot:S'),
                                                     ('ht', 'Fl_I1:tot:h'), ('W', 'Fl_I1:stat:W'), ('Ps', 'Fl_I2:stat:P')],
                                    promotes_outputs=['Fl_I1_calc:stat*'])
 
