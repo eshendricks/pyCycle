@@ -1,4 +1,5 @@
-from openmdao.api import Group
+from openmdao.api import Group, IndepVarComp
+import numpy as np
 
 from pycycle.cea import species_data
 from pycycle.cea.set_total import SetTotal
@@ -25,12 +26,14 @@ class FlowStart(Group):
         self.air_prods = thermo.products
         self.num_prod = len(self.air_prods)
 
-        # inputs
+        # set initial mass compowtition based on init_prod_amounts of selected thermo_data
+        self.add_subsystem('b0_init', IndepVarComp('b0',np.sum(thermo.aij*thermo.init_prod_amounts, axis=1)), promotes_outputs=['b0'])
+
         set_TP = SetTotal(mode="T", fl_name="Fl_O:tot",
                           thermo_data=thermo_data,
                           init_reacts=elements)
 
-        params = ('T','P', 'init_prod_amounts')
+        params = ('T','P', 'b0')
 
         self.add_subsystem('totals', set_TP, promotes_inputs=params,
                            promotes_outputs=('Fl_O:tot:*',))
@@ -40,7 +43,7 @@ class FlowStart(Group):
         set_stat_MN = SetStatic(mode="MN", thermo_data=thermo_data,
                                 init_reacts=elements, fl_name="Fl_O:stat")
 
-        self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W'),
+        self.add_subsystem('exit_static', set_stat_MN, promotes_inputs=('MN', 'W', 'b0'),
                            promotes_outputs=('Fl_O:stat:*', ))
 
         self.connect('totals.h','exit_static.ht')

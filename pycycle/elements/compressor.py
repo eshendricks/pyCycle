@@ -453,8 +453,8 @@ class Compressor(om.Group):
                                                   mode='S',
                                                   init_reacts=elements),
                            promotes_inputs=[('S', 'Fl_I:tot:S'),
-                                            ('init_prod_amounts',
-                                             'Fl_I:tot:n')])
+                                            ('b0',
+                                             'Fl_I:tot:b0')])
         self.connect("press_rise.Pt_out", "ideal_flow.P")
 
         # Calculate enthalpy rise across compressor
@@ -467,7 +467,7 @@ class Compressor(om.Group):
                              init_reacts=elements, fl_name="Fl_O:tot")
         self.add_subsystem('real_flow', real_flow,
                            promotes_inputs=[
-                               ('init_prod_amounts', 'Fl_I:tot:n')],
+                               ('b0', 'Fl_I:tot:b0')],
                            promotes_outputs=['Fl_O:tot:*'])
         self.connect("enth_rise.ht_out", "real_flow.h")
         self.connect("press_rise.Pt_out", "real_flow.P")
@@ -504,7 +504,7 @@ class Compressor(om.Group):
                                   init_reacts=elements, fl_name=BN + ":tot")
             self.add_subsystem(BN + '_flow', bleed_flow,
                                promotes_inputs=[
-                                   ('init_prod_amounts', 'Fl_I:tot:n')],
+                                   ('b0', 'Fl_I:tot:b0')],
                                promotes_outputs=['{}:tot:*'.format(BN)])
             self.connect(BN + ':ht', BN + "_flow.h")
             self.connect(BN + ':Pt', BN + "_flow.P")
@@ -520,8 +520,8 @@ class Compressor(om.Group):
                     fl_name="Fl_O:stat")
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[
-                                       'MN', ('init_prod_amounts',
-                                              'Fl_I:tot:n')],
+                                       'MN', ('b0',
+                                              'Fl_I:tot:b0')],
                                    promotes_outputs=['Fl_O:stat:*'])
                 self.connect('Fl_O:tot:S', 'out_stat.S')
                 self.connect('Fl_O:tot:h', 'out_stat.ht')
@@ -535,7 +535,7 @@ class Compressor(om.Group):
                     fl_name="Fl_O:stat")
                 self.add_subsystem('out_stat', out_stat,
                                    promotes_inputs=[
-                                       'area', ('init_prod_amounts', 'Fl_I:tot:n')],
+                                       'area', ('b0', 'Fl_I:tot:b0')],
                                    promotes_outputs=['Fl_O:stat:*'])
 
                 self.connect('Fl_O:tot:S', 'out_stat.S')

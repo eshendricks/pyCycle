@@ -14,6 +14,7 @@ from pycycle.elements.nozzle import Nozzle
 from pycycle.constants import AIR_MIX
 
 from pycycle.elements.test.util import check_element_partials
+from pycycle.connect_flow import connect_flow
 
 
 # AIR_MIX = {'O':1, 'C':1, 'N':1, 'Ar':1}
@@ -45,18 +46,19 @@ class NozzleTestCase(unittest.TestCase):
                                                               elements=AIR_MIX))
         self.prob.model.add_subsystem('nozzle', Nozzle(elements=AIR_MIX, lossCoef='Cfg', internal_solver=True))
 
-        fl_src = "flow_start.Fl_O"
-        fl_target = "nozzle.Fl_I"
-        for v_name in ('h', 'T', 'P', 'S', 'rho', 'gamma', 'Cp', 'Cv', 'n'):
-            self.prob.model.connect('%s:tot:%s' % (
-                fl_src, v_name), '%s:tot:%s' % (fl_target, v_name))
+        connect_flow(self.prob.model, 'flow_start.Fl_O', 'nozzle.Fl_I')
+        # fl_src = "flow_start.Fl_O"
+        # fl_target = "nozzle.Fl_I"
+        # for v_name in ('h', 'T', 'P', 'S', 'rho', 'gamma', 'Cp', 'Cv', 'n'):
+        #     self.prob.model.connect('%s:tot:%s' % (
+        #         fl_src, v_name), '%s:tot:%s' % (fl_target, v_name))
 
-        # no prefix
-        for v_name in ('W', ):  # ('Wc', 'W', 'FAR'):
-            self.prob.model.connect(
-                '%s:stat:%s' %
-                (fl_src, v_name), '%s:stat:%s' %
-                (fl_target, v_name))
+        # # no prefix
+        # for v_name in ('W', ):  # ('Wc', 'W', 'FAR'):
+        #     self.prob.model.connect(
+        #         '%s:stat:%s' %
+        #         (fl_src, v_name), '%s:stat:%s' %
+        #         (fl_target, v_name))
 
         self.prob.model.connect('W', 'flow_start.W')
         self.prob.model.connect('P', 'flow_start.P')

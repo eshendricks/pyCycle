@@ -349,7 +349,7 @@ class Nozzle(om.Group):
         throat_total = SetTotal(thermo_data=thermo_data, mode="h", init_reacts=elements,
                                 fl_name="Fl_O:tot")
         prom_in = [('h', 'Fl_I:tot:h'),
-                   ('init_prod_amounts', 'Fl_I:tot:n')]
+                   ('b0', 'Fl_I:tot:b0')]
         self.add_subsystem('throat_total', throat_total, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
         self.connect('press_calcs.Pt_th', 'throat_total.P')
@@ -357,7 +357,7 @@ class Nozzle(om.Group):
         # Calculate static properties for sonic flow
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('W', 'Fl_I:stat:W'),
-                   ('init_prod_amounts', 'Fl_I:tot:n')]
+                   ('b0', 'Fl_I:tot:b0')]
         self.add_subsystem('staticMN', SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements),
                            promotes_inputs=prom_in)
         self.connect('throat_total.S', 'staticMN.S')
@@ -370,7 +370,7 @@ class Nozzle(om.Group):
         prom_in = [('ht', 'Fl_I:tot:h'),
                    ('W', 'Fl_I:stat:W'),
                    ('Ps', 'Ps_calc'),
-                   ('init_prod_amounts', 'Fl_I:tot:n')]
+                   ('b0', 'Fl_I:tot:b0')]
         self.add_subsystem('staticPs', SetStatic(mode="Ps", thermo_data=thermo_data, init_reacts=elements),
                            promotes_inputs=prom_in)
         self.connect('throat_total.S', 'staticPs.S')
@@ -382,7 +382,7 @@ class Nozzle(om.Group):
                    ('S', 'Fl_I:tot:S'),
                    ('W', 'Fl_I:stat:W'),
                    ('Ps', 'Ps_calc'),
-                   ('init_prod_amounts', 'Fl_I:tot:n')]
+                   ('b0', 'Fl_I:tot:b0')]
         self.add_subsystem('ideal_flow', SetStatic(mode="Ps", thermo_data=thermo_data, init_reacts=elements),
                            promotes_inputs=prom_in)
         # self.connect('press_calcs.Ps_calc', 'ideal_flow.Ps')
@@ -499,7 +499,7 @@ if __name__ == "__main__":
     # # p.model.MNth = 1.0
     # # p.model.throat_static.n2ls.Pt = 3.457820249
 
-    p.run()
+    p.run_model()
 
     # from openmdao.main.api import set_as_top
     # nozzle = set_as_top(Nozzle())

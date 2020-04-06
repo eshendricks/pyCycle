@@ -158,6 +158,8 @@ class ChemEq(om.ImplicitComponent):
         thermo = self.options['thermo']
         mode = self.options['mode']
 
+        # print(self.pathname, 'b0', inputs['b0'])
+
         P = inputs['P'] / P_REF
         n = outputs['n']
         n_moles = np.sum(n)

@@ -226,7 +226,7 @@ class Row(om.Group):
 
         self.connect('consts.bld_frac_P', 'mix_n.cool:frac_P')
 
-        self.connect('mix_n.n_out', 'mixed_flow.init_prod_amounts')
+        self.connect('mix_n.b0_out', 'mixed_flow.b0')
         self.connect('cooling_calcs.ht_out', 'mixed_flow.h')
         self.connect('cooling_calcs.Pt_stage', 'mixed_flow.P')
 

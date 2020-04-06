@@ -12,6 +12,7 @@ from pycycle.elements.splitter import Splitter
 from pycycle.elements.flow_start import FlowStart
 
 from pycycle.elements.test.util import check_element_partials
+from pycycle.connect_flow import connect_flow
 
 
 fpath = os.path.dirname(os.path.realpath(__file__))
@@ -81,17 +82,7 @@ class splitterTestCase(unittest.TestCase):
         #total and static
         fl_src = "flow_start.Fl_O"
         fl_target = "splitter.Fl_I"
-        for v_name in ('h', 'T', 'P', 'S', 'rho', 'gamma', 'Cp', 'Cv', 'n'):
-            self.prob.model.connect(
-                '%s:tot:%s' %
-                (fl_src, v_name), '%s:tot:%s' %
-                (fl_target, v_name))
-        # no prefix
-        for v_name in ('W', ):  # ('Wc', 'W', 'FAR'):
-            self.prob.model.connect(
-                '%s:stat:%s' %
-                (fl_src, v_name), '%s:stat:%s' %
-                (fl_target, v_name))
+        connect_flow(self.prob.model, 'flow_start.Fl_O', 'splitter.Fl_I')
 
         self.prob.set_solver_print(level=-1)
         self.prob.setup(check=False)

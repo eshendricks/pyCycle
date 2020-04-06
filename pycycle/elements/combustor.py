@@ -44,6 +44,7 @@ class MixFuel(om.ExplicitComponent):
         self.air_fuel_wt_mole = air_fuel_thermo.wt_mole
 
         self.num_prod = n_prods = len(self.air_fuel_prods)
+        self.aij = air_fuel_thermo.aij
 
         self.init_air_amounts = np.zeros(n_prods)
         self.init_fuel_amounts = np.zeros(n_prods)
@@ -62,6 +63,7 @@ class MixFuel(om.ExplicitComponent):
         self.add_output('init_prod_amounts', shape=n_prods, desc='initial product amounts')
         self.add_output('Wout', shape=1, units="lbm/s", desc="total massflow out")
         self.add_output('Wfuel', shape=1, units="lbm/s", desc="total fuel massflow out")
+        self.add_output('b0_out', val=np.sum(air_fuel_thermo.aij*np.ones(self.num_prod), axis=1))
 
         for i, r in enumerate(self.air_fuel_prods):
             self.init_fuel_amounts_base[i] = janaf.reactants[fuel_type].get(r, 0) * janaf.products[r]['wt']
@@ -76,6 +78,7 @@ class MixFuel(om.ExplicitComponent):
         self.declare_partials('init_prod_amounts', ['Fl_I:FAR', 'Fl_I:tot:n'])
         self.declare_partials('Wout', ['Fl_I:stat:W', 'Fl_I:FAR'])
         self.declare_partials('Wfuel', ['Fl_I:stat:W', 'Fl_I:FAR'])
+        self.declare_partials('b0_out', ['Fl_I:FAR', 'Fl_I:tot:n'])
 
     def compute(self, inputs, outputs):
         FAR = inputs['Fl_I:FAR']
@@ -112,6 +115,8 @@ class MixFuel(om.ExplicitComponent):
 
         outputs['Wfuel'] = W * FAR
 
+        outputs['b0_out'] = np.sum(self.aij*outputs['init_prod_amounts'], axis=1)
+
     def compute_partials(self, inputs, J):
         FAR = inputs['Fl_I:FAR']
         W = inputs['Fl_I:stat:W']
@@ -147,6 +152,9 @@ class MixFuel(om.ExplicitComponent):
             dinit_prod_dn[j] = temp[:,i]
 
         J['init_prod_amounts', 'Fl_I:tot:n'] = dinit_prod_dn
+
+        J['b0_out', 'Fl_I:FAR'] = np.matmul(self.aij,J['init_prod_amounts','Fl_I:FAR'])
+        J['b0_out', 'Fl_I:tot:n'] = np.matmul(self.aij,J['init_prod_amounts', 'Fl_I:tot:n'])
 
 
 class Combustor(om.Group):
@@ -239,7 +247,7 @@ class Combustor(om.Group):
                             fl_name="Fl_O:tot")
         self.add_subsystem('vitiated_flow', vit_flow, promotes_outputs=['Fl_O:*'])
         self.connect("mix_fuel.mass_avg_h", "vitiated_flow.h")
-        self.connect("mix_fuel.init_prod_amounts", "vitiated_flow.init_prod_amounts")
+        self.connect("mix_fuel.b0_out", "vitiated_flow.b0")
         self.connect("p_loss.Pt_out","vitiated_flow.P")
 
         if statics:
@@ -252,7 +260,7 @@ class Combustor(om.Group):
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
                                    promotes_outputs=prom_out)
 
-                self.connect("mix_fuel.init_prod_amounts", "out_stat.init_prod_amounts")
+                self.connect("mix_fuel.b0_out", "out_stat.b0")
                 self.connect('Fl_O:tot:S', 'out_stat.S')
                 self.connect('Fl_O:tot:h', 'out_stat.ht')
                 self.connect('Fl_O:tot:P', 'out_stat.guess:Pt')
@@ -267,7 +275,7 @@ class Combustor(om.Group):
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
                                    promotes_outputs=prom_out)
-                self.connect("mix_fuel.init_prod_amounts", "out_stat.init_prod_amounts")
+                self.connect("mix_fuel.b0_out", "out_stat.b0")
 
                 self.connect('Fl_O:tot:S', 'out_stat.S')
                 self.connect('Fl_O:tot:h', 'out_stat.ht')
@@ -287,17 +295,17 @@ if __name__ == "__main__":
 
     p = om.Problem()
     p.model = om.Group()
-    p.model.add('comp', MixFuel(), promotes=['*'])
+    p.model.add_subsystem('comp', MixFuel(), promotes=['*'])
 
-    p.model.add('d1', IndepVarComp('Fl_I:stat:W', val=1.0, units='lbm/s', desc='weight flow'),
+    p.model.add_subsystem('d1', om.IndepVarComp('Fl_I:stat:W', val=1.0, units='lbm/s', desc='weight flow'),
                 promotes=['*'])
-    p.model.add('d2', IndepVarComp('Fl_I:FAR', val=0.2, desc='Fuel to air ratio'), promotes=['*'])
-    p.model.add('d3', IndepVarComp('Fl_I:tot:h', val=1.0, units='Btu/lbm', desc='total enthalpy'),
+    p.model.add_subsystem('d2', om.IndepVarComp('Fl_I:FAR', val=0.2, desc='Fuel to air ratio'), promotes=['*'])
+    p.model.add_subsystem('d3', om.IndepVarComp('Fl_I:tot:h', val=1.0, units='Btu/lbm', desc='total enthalpy'),
                 promotes=['*'])
-    p.model.add('d4', IndepVarComp('fuel_Tt', val=518.0, units='degR', desc='fuel temperature'),
+    p.model.add_subsystem('d4', om.IndepVarComp('fuel_Tt', val=518.0, units='degR', desc='fuel temperature'),
                 promotes=['*'])
 
     p.setup(check=False)
     p.run_model()
 
-    p.check_partials(compact_print=True)
+    p.check_partials(compact_print=False)

@@ -150,7 +150,7 @@ class Tests(unittest.TestCase):
             flow_start.FlowStart(
                 thermo_data=species_data.janaf,
                 elements=AIR_FUEL_MIX))
-        p.model.connect('mix_fuel.init_prod_amounts', 'burner_flow.init_prod_amounts')
+        # p.model.connect('mix_fuel.init_prod_amounts', 'burner_flow.init_prod_amounts')
         p.model.connect('Tt_primary', 'burner_flow.T')
         p.model.connect('Pt_in', 'burner_flow.P')
 

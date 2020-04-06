@@ -196,7 +196,7 @@ class Duct(om.Group):
         # Total Calc
         real_flow = SetTotal(thermo_data=thermo_data, mode='h',
                              init_reacts=elements, fl_name="Fl_O:tot")
-        prom_in = [('init_prod_amounts', 'Fl_I:tot:n')]
+        prom_in = [('b0', 'Fl_I:tot:b0')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
         self.connect("q_calc.ht_out", "real_flow.h")
@@ -206,7 +206,7 @@ class Duct(om.Group):
             if design:
             #   Calculate static properties
                 out_stat = SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('W', 'Fl_I:stat:W'),
                            'MN']
                 prom_out = ['Fl_O:stat:*']
@@ -221,7 +221,7 @@ class Duct(om.Group):
             else:
                 # Calculate static properties
                 out_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            ('W', 'Fl_I:stat:W'),
                            'area']
                 prom_out = ['Fl_O:stat:*']

@@ -53,6 +53,7 @@ class DuctTestCase(unittest.TestCase):
 
     def test_case1(self):
 
+
         self.prob = Problem()
         self.prob.model = Group()
         self.prob.model.add_subsystem('flow_start', FlowStart(thermo_data=janaf,
@@ -113,6 +114,7 @@ class DuctTestCase(unittest.TestCase):
 
 
     def test_case_with_dPqP_MN(self):
+
 
         self.prob = Problem()
         self.prob.model = Group()
@@ -181,6 +183,7 @@ class DuctTestCase(unittest.TestCase):
         assert_rel_error(self, ts_computed, ts, tol)
 
         check_element_partials(self, self.prob)
+
 
 if __name__ == "__main__":
     unittest.main()

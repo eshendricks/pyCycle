@@ -123,13 +123,13 @@ class BleedOut(om.Group):
             bleed_flow = SetTotal(thermo_data=thermo_data, mode='T',
                                   init_reacts=elements, fl_name=BN+":tot")
             self.add_subsystem(BN+'_flow', bleed_flow,
-                               promotes_inputs=[('init_prod_amounts', 'Fl_I:tot:n'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')],
+                               promotes_inputs=[('b0', 'Fl_I:tot:b0'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')],
                                promotes_outputs=['{}:tot:*'.format(BN)])
 
         # Total Calc
         real_flow = SetTotal(thermo_data=thermo_data, mode='T',
                              init_reacts=elements, fl_name="Fl_O:tot")
-        prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')]
+        prom_in = [('b0', 'Fl_I:tot:b0'),('T','Fl_I:tot:T'),('P','Fl_I:tot:P')]
         self.add_subsystem('real_flow', real_flow, promotes_inputs=prom_in,
                            promotes_outputs=['Fl_O:*'])
 
@@ -137,7 +137,7 @@ class BleedOut(om.Group):
             if design:
             #   Calculate static properties
                 out_stat = SetStatic(mode="MN", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            'MN']
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,
@@ -152,7 +152,7 @@ class BleedOut(om.Group):
             else:
                 # Calculate static properties
                 out_stat = SetStatic(mode="area", thermo_data=thermo_data, init_reacts=elements, fl_name="Fl_O:stat")
-                prom_in = [('init_prod_amounts', 'Fl_I:tot:n'),
+                prom_in = [('b0', 'Fl_I:tot:b0'),
                            'area']
                 prom_out = ['Fl_O:stat:*']
                 self.add_subsystem('out_stat', out_stat, promotes_inputs=prom_in,

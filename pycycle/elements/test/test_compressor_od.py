@@ -6,7 +6,6 @@ from openmdao.api import Problem, IndepVarComp
 from openmdao.utils.assert_utils import assert_rel_error
 from openmdao.api import DirectSolver, BoundsEnforceLS, NewtonSolver
 
-
 from pycycle.constants import AIR_MIX
 from pycycle.cea.species_data import janaf
 from pycycle.connect_flow import connect_flow
@@ -21,6 +20,7 @@ from pycycle.elements.test.util import check_element_partials
 class CompressorODTestCase(unittest.TestCase):
 
     def setUp(self):
+
 
         self.prob = Problem()
 

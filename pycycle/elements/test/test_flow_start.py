@@ -5,6 +5,7 @@ import os
 from openmdao.api import Problem, Group, IndepVarComp
 from openmdao.utils.assert_utils import assert_rel_error
 
+from pycycle.cea import species_data
 from pycycle.cea.species_data import janaf
 from pycycle.elements.flow_start import FlowStart
 from pycycle.constants import AIR_MIX
@@ -37,6 +38,8 @@ h_map = dict(((v_name, i) for i, v_name in enumerate(header)))
 class FlowStartTestCase(unittest.TestCase):
 
     def setUp(self):
+
+        thermo = species_data.Thermo(janaf)
 
         self.prob = Problem()
 
